@@ -1,22 +1,40 @@
 package main
 
 import (
-	"fmt"
+	// Standard library packages
 	"net/http"
 
+	// Third party packages
+	"github.com/dsudia/go-rest-tutorial/controllers"
 	"github.com/julienschmidt/httprouter"
+  "gopkg.in/mgo.v2"
 )
 
 func main() {
-	// Instantiate new router
+	// Instantiate a new router
 	r := httprouter.New()
 
-	// Add a handler on /test
-	r.GET("/test", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		// Simply write some test data for now
-		fmt.Fprint(w, "Welcome!\n")
-	})
+	// Get a UserController instance
+	uc := controllers.NewUserController(getSession())
 
-	// Starts the server
+	// Get a user resource
+	r.GET("/user/:id", uc.GetUser)
+
+	r.POST("/user", uc.CreateUser)
+
+	r.DELETE("/user/:id", uc.RemoveUser)
+
+	// Fire up the server
 	http.ListenAndServe("localhost:3000", r)
+}
+
+func getSession() *mgo.Session {
+	// Connect to our local mongo
+	s, err := mgo.Dial("mongodb://localhost")
+
+	// Check if connection error, is mongo running?
+	if err != nil {
+		panic(err)
+	}
+	return s
 }
